@@ -9,11 +9,28 @@ Newest entries on top. The point of this port: prove NGageRecomp generalizes bey
 | 0 | Binary identified (engine `6r45_1.app`, E32Image, ARMv4, 2028 funcs) | ✅ done |
 | 1 | Whole engine lifts ARM→C | ✅ done — 100% / 0 stubs (added `smlal`) |
 | 2 | Whole corpus compiles clean (`clang -Wall`) | ✅ done — 154k lines |
-| 3 | Import table dumped → HLE worklist (598 / ~30 DLLs) | 🟡 next |
-| 4 | HLE bring-up (reuse EUSER/EFSRV/desc/soft-float; add S60 UI) | ⬜ |
-| 5 | Engine entry runs → window-server draw → first frame | ⬜ |
+| 3 | Import table dumped → HLE worklist (598 / ~30 DLLs) | ✅ done |
+| 4 | Engine runs: NewApplication + AppUi::ConstructL execute | ✅ done (63/598, framework reuse) |
+| 5 | Window-server HLE (WS32 objects + CWindowGc draws) → first frame | 🟡 in progress |
 
 ## Log
+
+### 2026-06-12 (cont.) — the engine runs its own code
+- Dumped the engine import table (598 imports / 31 modules). `gen_hle` reused **63 framework
+  shims for free** (EUSER/EFSRV/descriptors/soft-float/heap/leave), named-stubbed the other
+  535. No ordinal collisions with SonicN's HLE map.
+- **First contact identical to SonicN**: the engine's `NewApplication` (`_6r45_1_1` @
+  0x1008a1e8) executes — `operator new` the `CEikApplication` object, ctor, vtable, returns
+  a valid object — hitting only the same benign `CEikApplication` ctor stub. Zero
+  Snakes-specific HLE needed.
+- Drove the AppUi `ConstructL` (`sub_1008A560`): it runs into the **window-server setup**
+  and faults at `*(a1+96)` being null — `WS32_348` (a window-server object factory) is a
+  named stub returning null, then the game derefs it.
+- **Frontier = the window-server HLE.** Snakes renders through `RWsSession`/`RWindow`/
+  `CWsScreenDevice`/`CWindowGc` (the WS32 client-server stack) + draw calls — the subsystem
+  SonicN bypassed via NOKIAFC. Same synthetic-vtable-object pattern as the SonicN graphics
+  objects, applied to WS32. That, plus the S60 UI toolkit (EIKCOCTL/AVKON), is the work to
+  a first frame.
 
 ### 2026-06-12 — the framework generalizes
 - Selected Snakes as the 2nd target specifically because it renders via the **window server +
