@@ -15,6 +15,21 @@ Newest entries on top. The point of this port: prove NGageRecomp generalizes bey
 
 ## Log
 
+### 2026-06-12 (cont.) — window-server HLE: ConstructL drives deep into init
+- Resolved the WS32 ordinals from call-site usage (firmware `ws32.dll` exports are
+  symbol-less; Snakes uses only 5 raw WS32 ordinals — its drawing goes via CONE).
+- Built the window-server HLE start: a shared **self-referential HLE-object factory**
+  (`hleobj.c` — `ngage_hle_object`: vtable of no-op slots + members seeded with a single
+  "universal" object, so the window-server object graph never dereferences null), the WS32
+  factory shims (`hle/wserv.c`), and the CONE/EIKCORE singleton getters
+  (`CCoeEnv::Static`, `CEikAppUi::Application`) returning that universal object.
+- Effect: `AppUi::ConstructL` now drives **far deeper** — the fault chain went from ~5
+  frames (window-server setup) to **12+ frames** into the engine's data-init subsystem
+  (`sub_10050xxx`). The synthetic-object patterns from SonicN's graphics HLE transfer
+  directly to Snakes's window server. **67/598 shims.**
+- **Next:** keep grinding the init nulls (now specific game objects, not just getters);
+  then the CONE/CWindowGc draw path → first window-server frame.
+
 ### 2026-06-12 (cont.) — the engine runs its own code
 - Dumped the engine import table (598 imports / 31 modules). `gen_hle` reused **63 framework
   shims for free** (EUSER/EFSRV/descriptors/soft-float/heap/leave), named-stubbed the other
