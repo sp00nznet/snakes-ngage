@@ -1,0 +1,14 @@
+# NGageRecomp configuration for Snakes (the engine binary).
+[input]
+image = "game/system/apps/6r45_1/6r45_1.app"
+cpu   = "armv4"
+# engine export entry (NewApplication equivalent): _6r45_1_1 @ 0x1008a1e8
+
+[output]
+dir   = "out/"
+
+[functions]
+# entry = 0x1008a1e8
+
+[sections]
+# none known yet
